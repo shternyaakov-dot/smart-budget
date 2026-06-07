@@ -1,17 +1,25 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, ArrowRight, Trash2 } from 'lucide-react'
+import { Plus, Search, ArrowRight, Trash2, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { generateToken } from '@/lib/utils'
 import type { Client } from '@/types/database'
 
-const stageBadge: Record<string, string> = {
-  'מודעות': 'bg-blue-100 text-blue-800',
-  'שינוי': 'bg-amber-100 text-amber-800',
-  'שמירה': 'bg-green-100 text-green-800',
+const F = 'Inter, Segoe UI, system-ui, sans-serif'
+
+const stagePill: Record<string, { bg: string; color: string; border: string }> = {
+  'מודעות': { bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' },
+  'שינוי':  { bg: '#FFFBEB', color: '#B45309', border: '#FDE68A' },
+  'שמירה': { bg: '#F0FDF4', color: '#15803D', border: '#BBF7D0' },
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '9px 12px', border: '1px solid #E2E8F0',
+  borderRadius: 8, fontSize: 14, fontFamily: F, color: '#0F172A',
+  background: '#fff', outline: 'none', boxSizing: 'border-box', marginBottom: 12,
 }
 
 export default function CoachClients() {
@@ -34,16 +42,10 @@ export default function CoachClients() {
   const addClient = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('clients').insert({
-        coach_id: user!.id,
-        name: form.name,
-        email: form.email || null,
-        phone: form.phone || null,
-        stage: form.stage,
-        session: 1,
-        notes: form.notes || null,
-        token: generateToken(),
-        materials: [],
-        guide_data: {},
+        coach_id: user!.id, name: form.name,
+        email: form.email || null, phone: form.phone || null,
+        stage: form.stage, session: 1, notes: form.notes || null,
+        token: generateToken(), materials: [], guide_data: {},
       })
       if (error) throw error
     },
@@ -68,101 +70,129 @@ export default function CoachClients() {
   )
 
   return (
-    <div className="min-h-screen bg-cream" dir="rtl">
-      <div className="bg-navy text-white px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link to="/coach" className="text-white/60 hover:text-white"><ArrowRight size={18} /></Link>
-          <h1 className="text-lg font-bold">כל הלקוחות</h1>
+    <div style={{ minHeight: '100vh', background: '#FAFAFA', fontFamily: F }} dir="rtl">
+      {/* Header */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '0 28px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link to="/coach" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: '1px solid #E2E8F0', color: '#64748B', textDecoration: 'none', transition: 'all 0.15s' }}>
+            <ArrowRight size={15} />
+          </Link>
+          <div>
+            <p style={{ fontSize: 10, color: '#94A3B8', letterSpacing: '0.1em' }}>תקציב חכם</p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>כל הלקוחות</p>
+          </div>
         </div>
         <button onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 bg-gold text-navy px-4 py-2 rounded-lg font-bold text-sm hover:bg-gold-dark transition-all">
-          <Plus size={15} /> לקוח חדש
+          style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0F172A', color: '#fff', border: 'none', borderRadius: 9, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'background 0.15s' }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#1E293B')}
+          onMouseLeave={e => (e.currentTarget.style.background = '#0F172A')}>
+          <Plus size={14} /> לקוח חדש
         </button>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-5">
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 24px' }}>
         {/* Search */}
-        <div className="relative mb-4">
-          <Search size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <div style={{ position: 'relative', marginBottom: 16 }}>
+          <Search size={14} style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', color: '#CBD5E1', pointerEvents: 'none' }} />
           <input type="text" placeholder="חיפוש לקוח..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl pr-9 pl-4 py-2.5 text-sm bg-white focus:outline-none focus:border-navy" />
+            style={{ ...inputStyle, marginBottom: 0, paddingRight: 38, background: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}
+            onFocus={e => (e.target.style.borderColor = '#94A3B8')}
+            onBlur={e => (e.target.style.borderColor = '#E2E8F0')} />
         </div>
 
         {/* List */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           {isLoading ? (
-            <div className="p-8 text-center text-gray-400">טוען...</div>
+            <div style={{ padding: 40, textAlign: 'center', color: '#CBD5E1', fontSize: 14 }}>טוען...</div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-400">לא נמצאו לקוחות</div>
+            <div style={{ padding: 48, textAlign: 'center' }}>
+              <p style={{ fontSize: 14, color: '#94A3B8' }}>לא נמצאו לקוחות</p>
+            </div>
           ) : (
-            <div className="divide-y divide-gray-50">
-              {filtered.map(c => (
-                <div key={c.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50/70 transition-colors">
-                  <Link to={`/coach/clients/${c.id}`} className="flex-1 flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-navy text-sm">{c.name}</p>
-                      <p className="text-xs text-gray-400">{c.email || 'ללא אימייל'} {c.phone ? `· ${c.phone}` : ''}</p>
+            filtered.map((c, i) => {
+              const pill = stagePill[c.stage] || stagePill['מודעות']
+              return (
+                <div key={c.id} style={{ display: 'flex', alignItems: 'center', borderBottom: i < filtered.length - 1 ? '1px solid #F8FAFC' : 'none' }}>
+                  <Link to={`/coach/clients/${c.id}`}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', textDecoration: 'none', transition: 'background 0.1s' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#FAFAFA')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 9, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#475569' }}>
+                        {c.name.slice(0, 2)}
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>{c.name}</p>
+                        <p style={{ fontSize: 12, color: '#94A3B8' }}>{c.email || 'ללא אימייל'}{c.phone ? ` · ${c.phone}` : ''}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${stageBadge[c.stage]}`}>{c.stage}</span>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{c.session}/6</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 999, background: pill.bg, color: pill.color, border: `1px solid ${pill.border}` }}>{c.stage}</span>
+                      <span style={{ fontSize: 12, color: '#CBD5E1' }}>{c.session}/6</span>
                     </div>
                   </Link>
-                  <button onClick={() => { if (confirm('למחוק?')) deleteClient.mutate(c.id) }}
-                    className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all">
+                  <button onClick={() => confirm('למחוק?') && deleteClient.mutate(c.id)}
+                    style={{ padding: '8px 16px', color: '#CBD5E1', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#CBD5E1')}>
                     <Trash2 size={14} />
                   </button>
                 </div>
-              ))}
-            </div>
+              )
+            })
           )}
         </div>
       </div>
 
-      {/* Add client modal */}
+      {/* Modal */}
       <AnimatePresence>
         {showAdd && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}
             onClick={e => e.target === e.currentTarget && setShowAdd(false)}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-              <h3 className="text-lg font-bold text-navy mb-5">לקוח חדש</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="text-xs text-gray-400 block mb-1">שם מלא *</label>
-                  <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-navy" />
+            <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
+              style={{ background: '#fff', borderRadius: 16, padding: '28px', width: '100%', maxWidth: 440, boxShadow: '0 20px 60px rgba(0,0,0,0.12)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: '#0F172A' }}>לקוח חדש</h3>
+                <button onClick={() => setShowAdd(false)} style={{ color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 6 }}><X size={16} /></button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: '#475569', display: 'block', marginBottom: 5 }}>שם מלא *</label>
+                  <input style={inputStyle} type="text" placeholder="ישראל כהן" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    onFocus={e => (e.target.style.borderColor = '#94A3B8')} onBlur={e => (e.target.style.borderColor = '#E2E8F0')} />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400 block mb-1">אימייל</label>
-                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-navy" dir="ltr" />
+                  <label style={{ fontSize: 12, fontWeight: 500, color: '#475569', display: 'block', marginBottom: 5 }}>אימייל</label>
+                  <input style={{ ...inputStyle, direction: 'ltr' }} type="email" placeholder="email@example.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    onFocus={e => (e.target.style.borderColor = '#94A3B8')} onBlur={e => (e.target.style.borderColor = '#E2E8F0')} />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400 block mb-1">טלפון</label>
-                  <input type="text" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-navy" dir="ltr" />
+                  <label style={{ fontSize: 12, fontWeight: 500, color: '#475569', display: 'block', marginBottom: 5 }}>טלפון</label>
+                  <input style={{ ...inputStyle, direction: 'ltr' }} type="text" placeholder="07123456789" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                    onFocus={e => (e.target.style.borderColor = '#94A3B8')} onBlur={e => (e.target.style.borderColor = '#E2E8F0')} />
                 </div>
-                <div className="col-span-2">
-                  <label className="text-xs text-gray-400 block mb-1">שלב</label>
-                  <select value={form.stage} onChange={e => setForm(f => ({ ...f, stage: e.target.value as Client['stage'] }))}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-navy">
-                    <option value="מודעות">מודעות</option>
-                    <option value="שינוי">שינוי</option>
-                    <option value="שמירה">שמירה</option>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: '#475569', display: 'block', marginBottom: 5 }}>שלב</label>
+                  <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.stage} onChange={e => setForm(f => ({ ...f, stage: e.target.value as Client['stage'] }))}>
+                    <option value="מודעות">מודעות — Awareness</option>
+                    <option value="שינוי">שינוי — Change</option>
+                    <option value="שמירה">שמירה — Maintenance</option>
                   </select>
                 </div>
-                <div className="col-span-2">
-                  <label className="text-xs text-gray-400 block mb-1">הערות פנימיות</label>
-                  <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-navy resize-none" />
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: '#475569', display: 'block', marginBottom: 5 }}>הערות פנימיות</label>
+                  <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: 72 }} placeholder="הערות שרק אתה רואה..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                    onFocus={e => (e.target.style.borderColor = '#94A3B8')} onBlur={e => (e.target.style.borderColor = '#E2E8F0')} />
                 </div>
               </div>
-              <div className="flex gap-2 mt-5">
-                <button onClick={() => setShowAdd(false)} className="flex-1 border border-gray-200 py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-all">ביטול</button>
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <button onClick={() => setShowAdd(false)}
+                  style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #E2E8F0', background: '#fff', fontSize: 13, cursor: 'pointer', fontFamily: F, color: '#64748B' }}>
+                  ביטול
+                </button>
                 <button onClick={() => form.name && addClient.mutate()} disabled={!form.name || addClient.isPending}
-                  className="flex-1 bg-navy text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-navy-light transition-all disabled:opacity-60">
+                  style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: '#0F172A', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: F, opacity: !form.name ? 0.5 : 1 }}>
                   {addClient.isPending ? 'שומר...' : 'צור לקוח'}
                 </button>
               </div>

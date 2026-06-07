@@ -6,28 +6,26 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Client } from '@/types/database'
 
+const F = 'Inter, Segoe UI, system-ui, sans-serif'
+
+const stagePill: Record<string, { bg: string; color: string; border: string }> = {
+  'מודעות': { bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' },
+  'שינוי':  { bg: '#FFFBEB', color: '#B45309', border: '#FDE68A' },
+  'שמירה': { bg: '#F0FDF4', color: '#15803D', border: '#BBF7D0' },
+}
+
 function useClients() {
   const { user } = useAuth()
   return useQuery({
     queryKey: ['clients', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('clients').select('*').eq('coach_id', user!.id).order('created_at', { ascending: false })
+      const { data, error } = await supabase.from('clients').select('*').eq('coach_id', user!.id).order('created_at', { ascending: false })
       if (error) throw error
       return data as Client[]
     },
     enabled: !!user,
   })
 }
-
-const stageBadge: Record<string, string> = {
-  'מודעות': 'bg-blue-50 text-blue-700 border-blue-100',
-  'שינוי':   'bg-amber-50 text-amber-700 border-amber-100',
-  'שמירה':  'bg-green-50 text-green-700 border-green-100',
-}
-
-const stagger = { show: { transition: { staggerChildren: 0.08 } } }
-const fade = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }
 
 export default function CoachDashboard() {
   const { user, signOut } = useAuth()
@@ -36,91 +34,95 @@ export default function CoachDashboard() {
   const done   = clients.filter(c => c.session >= 6)
 
   return (
-    <div className="min-h-screen bg-cream" dir="rtl">
-      {/* Header */}
-      <div className="hero-pattern text-white px-6 py-5 flex items-center justify-between">
-        <div>
-          <p className="text-gold text-[10px] tracking-widest uppercase mb-0.5">בס"ד — תקציב חכם</p>
-          <h1 className="text-xl font-bold">לוח הבקרה</h1>
-          <p className="text-white/50 text-xs mt-0.5">{user?.email}</p>
+    <div style={{ minHeight: '100vh', background: '#FAFAFA', fontFamily: F }} dir="rtl">
+      {/* Top bar */}
+      <div style={{ background: '#ffffff', borderBottom: '1px solid #E2E8F0', padding: '0 28px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div>
+            <p style={{ fontSize: 10, color: '#94A3B8', letterSpacing: '0.1em' }}>בס"ד — תקציב חכם</p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>לוח הבקרה</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Link to="/coach/clients"
-            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-2 rounded-xl text-sm transition-all">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 12, color: '#94A3B8' }}>{user?.email}</span>
+          <div style={{ width: 1, height: 16, background: '#E2E8F0' }} />
+          <Link to="/coach/clients" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569', textDecoration: 'none', padding: '6px 12px', borderRadius: 7, border: '1px solid #E2E8F0', background: '#fff', transition: 'all 0.15s' }}>
             <Users size={14} /> לקוחות
           </Link>
-          <button onClick={signOut}
-            className="flex items-center gap-1.5 text-white/50 hover:text-white px-3 py-2 rounded-xl text-sm transition-all hover:bg-white/10">
+          <button onClick={signOut} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 10px', borderRadius: 7, fontFamily: F, transition: 'color 0.15s' }}>
             <LogOut size={14} />
           </button>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
         {/* Stats */}
-        <motion.div initial="hidden" animate="show" variants={stagger} className="grid grid-cols-3 gap-3 mb-6">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 28 }}>
           {[
-            { label: 'סה"כ לקוחות', value: clients.length, icon: <Users size={18} />, color: 'text-navy' },
-            { label: 'פעילים',       value: active.length,  icon: <CalendarDays size={18} />, color: 'text-amber-600' },
-            { label: 'סיימו ב"ה',    value: done.length,    icon: <CheckCircle size={18} />, color: 'text-green-600' },
+            { label: 'סה"כ לקוחות', value: clients.length, icon: <Users size={16} />, accent: '#3B82F6' },
+            { label: 'פעילים',       value: active.length,  icon: <CalendarDays size={16} />, accent: '#F59E0B' },
+            { label: 'סיימו ב"ה',    value: done.length,    icon: <CheckCircle size={16} />, accent: '#10B981' },
           ].map((s, i) => (
-            <motion.div key={i} variants={fade} className="bg-white rounded-2xl border border-gray-100 p-4 text-center shadow-sm hover:shadow-md hover:border-gold/20 transition-all">
-              <div className={`flex justify-center mb-1.5 ${s.color} opacity-60`}>{s.icon}</div>
-              <div className="text-3xl font-bold text-navy">{s.value}</div>
-              <div className="text-xs text-gray-400 mt-1">{s.label}</div>
+            <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+              style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '20px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div style={{ color: s.accent, opacity: 0.7, marginBottom: 8, display: 'flex', justifyContent: 'center' }}>{s.icon}</div>
+              <div style={{ fontSize: 30, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.03em' }}>{s.value}</div>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>{s.label}</div>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Active clients */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
-            <h2 className="font-bold text-navy">לקוחות פעילים</h2>
-            <div className="flex gap-2">
-              <Link to="/coach/clients"
-                className="text-xs text-gold hover:text-gold-dark flex items-center gap-1 transition-colors">
-                כל הלקוחות <ArrowLeft size={12} />
-              </Link>
-            </div>
+        {/* Clients card */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+          style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div style={{ padding: '18px 22px', borderBottom: '1px solid #F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>לקוחות פעילים</h2>
+            <Link to="/coach/clients" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#94A3B8', textDecoration: 'none', transition: 'color 0.15s' }}>
+              כל הלקוחות <ArrowLeft size={11} />
+            </Link>
           </div>
 
           {isLoading ? (
-            <div className="p-8 text-center text-gray-300 animate-pulse">טוען...</div>
+            <div style={{ padding: 40, textAlign: 'center', color: '#CBD5E1', fontSize: 14 }}>טוען...</div>
           ) : active.length === 0 ? (
-            <div className="p-10 text-center">
-              <div className="w-14 h-14 bg-gold/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Users size={24} className="text-gold" />
+            <div style={{ padding: 48, textAlign: 'center' }}>
+              <div style={{ width: 48, height: 48, background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', color: '#CBD5E1' }}>
+                <Users size={20} />
               </div>
-              <p className="text-gray-400 text-sm mb-4">עדיין אין לקוחות פעילים</p>
-              <Link to="/coach/clients"
-                className="inline-flex items-center gap-1.5 bg-navy text-white text-sm px-4 py-2 rounded-xl hover:bg-navy-light transition-all">
-                <Plus size={14} /> הוסף לקוח ראשון
+              <p style={{ fontSize: 14, color: '#94A3B8', marginBottom: 16 }}>עדיין אין לקוחות פעילים</p>
+              <Link to="/coach/clients" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#0F172A', color: '#fff', fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 8, textDecoration: 'none' }}>
+                <Plus size={13} /> הוסף לקוח ראשון
               </Link>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50/80">
-              {active.map((c, i) => (
-                <motion.div key={c.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.06 }}>
-                  <Link to={`/coach/clients/${c.id}`}
-                    className="flex items-center justify-between px-5 py-3.5 hover:bg-gray-50/60 transition-colors group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-navy/5 flex items-center justify-center text-navy font-bold text-sm group-hover:bg-gold/10 group-hover:text-gold transition-colors">
-                        {c.name.slice(0, 2)}
+            active.map((c, i) => {
+              const pill = stagePill[c.stage] || stagePill['מודעות']
+              const initials = c.name.slice(0, 2)
+              return (
+                <motion.div key={c.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.05 }}>
+                  <Link to={`/coach/clients/${c.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 22px', textDecoration: 'none', borderBottom: '1px solid #F8FAFC', transition: 'background 0.1s' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#FAFAFA')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 9, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#475569' }}>
+                        {initials}
                       </div>
                       <div>
-                        <p className="font-semibold text-navy text-sm">{c.name}</p>
-                        <p className="text-xs text-gray-400">{c.email || 'ללא אימייל'}</p>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>{c.name}</p>
+                        <p style={{ fontSize: 12, color: '#94A3B8' }}>{c.email || 'ללא אימייל'}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                      <span className={`badge ${stageBadge[c.stage]}`}>{c.stage}</span>
-                      <span className="text-xs text-gray-300 font-medium">{c.session}/6</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 999, background: pill.bg, color: pill.color, border: `1px solid ${pill.border}` }}>
+                        {c.stage}
+                      </span>
+                      <span style={{ fontSize: 12, color: '#CBD5E1', fontWeight: 500 }}>{c.session}/6</span>
                     </div>
                   </Link>
                 </motion.div>
-              ))}
-            </div>
+              )
+            })
           )}
         </motion.div>
       </div>
