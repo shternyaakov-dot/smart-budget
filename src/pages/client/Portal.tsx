@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
-import { FileText, MessageSquare, CalendarDays } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import type { Client } from '@/types/database'
 
 const F = 'Inter, Segoe UI, system-ui, sans-serif'
@@ -55,7 +55,7 @@ export default function ClientPortal() {
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #0F172A, #1E293B)', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <p style={{ fontSize: 10, color: '#C9A84C', letterSpacing: '0.15em' }}>בס"ד — תקציב חכם</p>
+          <p style={{ fontSize: 10, color: '#C9A84C', letterSpacing: '0.15em' }}>בס"ד — תקhציב חכם</p>
           <p style={{ fontSize: 15, fontWeight: 600, color: '#F8FAFC', letterSpacing: '-0.02em' }}>האזור האישי שלך</p>
         </div>
         <p style={{ fontSize: 12, color: '#475569' }}>Smart Budget London</p>
